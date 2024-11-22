@@ -1,0 +1,45 @@
+import multer, { StorageEngine, FileFilterCallback } from 'multer';
+import moment from 'moment';
+import path from 'path';
+import fs from 'fs';
+import { Request } from 'express';
+
+// Define the directory for uploads
+const uploadsDir = path.join('uploads');
+
+// Ensure the uploads directory exists
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+// Configure Multer storage to save files to disk with custom naming
+const storage: StorageEngine = multer.diskStorage({
+  destination: (req: Request, file: Express.Multer.File, cb: (error: null | Error, destination: string) => void) => {
+    cb(null, uploadsDir); // Pass 'null' as the first argument to indicate no error
+  },
+  filename: (req: Request, file: Express.Multer.File, cb: (error: null | Error, filename: string) => void) => {
+    // Use moment to format the current date and time
+    const timestamp = moment().format('YYYYMMDD-HHmmss');
+    const uniqueSuffix = `${timestamp}-${Math.round(Math.random() * 1e9)}${path.extname(file.originalname)}`;
+    cb(null, uniqueSuffix); // Pass 'null' as the first argument to indicate no error
+  },
+});
+
+// File filter to accept only specific image file types
+const fileFilter = (req: Request, file: Express.Multer.File, cb: FileFilterCallback) => {
+  const ext = path.extname(file.originalname).toLowerCase();
+  if (ext !== '.jpg' && ext !== '.jpeg' && ext !== '.png') {
+    // Pass `null` as the first argument and `false` as the second to indicate rejection
+    cb(null, false);
+  } else {
+    cb(null, true);
+  }
+};
+
+// Configure multer with storage and file filter
+const upload = multer({
+  storage,
+  fileFilter,
+});
+
+export default upload;
